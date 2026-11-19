@@ -73,24 +73,32 @@ export const TextInput = ({
   disabled,
   className,
 }: TextInputProps) => {
-  const [internalText, setInternalText] = useState(value);
+  const [internalText, setInternalText] = useState(
+    getValue(value, shouldTrim),
+  );
 
   const wrapperRef = useRef<HTMLInputElement>(null);
   const copyRef = useRef<HTMLDivElement>(null);
 
+  // Keep the raw typed text so that inner spaces and trailing spaces typed
+  // mid-edit are not dropped; only the reported value is trimmed.
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setInternalText(getValue(event.target.value, shouldTrim));
+    setInternalText(event.target.value);
     onChange?.(getValue(event.target.value, shouldTrim));
   };
   useEffect(() => {
-    setInternalText(getValue(value, shouldTrim));
+    setInternalText((currentText) =>
+      getValue(currentText, shouldTrim) === getValue(value, shouldTrim)
+        ? currentText
+        : getValue(value, shouldTrim),
+    );
   }, [value, shouldTrim]);
 
   useRegisterInputEvents({
     focusId: instanceId,
     inputRef: wrapperRef,
     copyRef: copyRef,
-    inputValue: internalText,
+    inputValue: getValue(internalText, shouldTrim),
     onEnter,
     onEscape,
     onClickOutside,
